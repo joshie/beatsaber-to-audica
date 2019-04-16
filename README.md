@@ -4,13 +4,14 @@ How To Use:
 
 install node.js from https://nodejs.org
 
-clone this repository
+clone this repository, or download it (clone or download > download zip)
 
-from this directory:
+from the downloaded/cloned directory on the command line:
 
+```
 npm install
-
 node bstoaud.js path/to/your/beatsabersong.zip
+```
 
 enjoy your .audica file
 
