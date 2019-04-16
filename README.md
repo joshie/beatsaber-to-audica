@@ -2,7 +2,7 @@ Dirty README (will update)
 
 How To Use:
 
-install node.js
+install node.js from https://nodejs.org
 
 clone this repository
 
