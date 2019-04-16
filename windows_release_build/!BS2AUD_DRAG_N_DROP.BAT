@@ -1,0 +1,3 @@
+cd /D "%~dp0"
+node\node.exe app\bstoaud.js "%~1"
+set /p DUMMY=Done! Hit ENTER to close...
