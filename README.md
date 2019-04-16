@@ -16,7 +16,7 @@ enjoy your .audica file
 
 NOTES
 
-this utility sets prerollSeconds in song.desc to 3.0. This is to avoid notes in the first 8 measures, as this will bork those notes. Not all songs will need this and you can potentially set it to 0.5, if you dare...
+this utility sets prerollSeconds in song.desc to 3.0. This is to avoid notes in the first 8 measures, as this will bork those notes. Not all Beat Saber songs will need this as they may have longer intros before notes, and you can potentially set it to 0.5, if you dare...
 
 If ExpertPlus is present, Audica Beginner maps to Beat Saber Normal, Moderate to Hard, Advanced to Expert, and Expert to ExpertPlus
 
