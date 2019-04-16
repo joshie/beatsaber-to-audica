@@ -1,0 +1,23 @@
+{
+  "name": "beatsaber-to-audica",
+  "version": "1.0.0",
+  "description": "Utility to Convert Beat Saber Custom Tracks to Audica",
+  "main": "bstoaud.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/joshie/beatsaber-to-audica.git"
+  },
+  "author": "Josh Lohrman",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/joshie/beatsaber-to-audica/issues"
+  },
+  "homepage": "https://github.com/joshie/beatsaber-to-audica#readme",
+  "dependencies": {
+    "jszip": "^3.2.1",
+    "node-stream-zip": "^1.8.0"
+  }
+}
