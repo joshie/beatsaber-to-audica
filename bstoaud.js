@@ -2,11 +2,11 @@ const fs = require('fs');
 const StreamZip = require('node-stream-zip');
 const JSZip = require("jszip");
 
-const moggHeaderPath = 'datafiles/moggheader';
+const moggHeaderPath = __dirname + '/datafiles/moggheader';
 const moggHeaderSize = fs.statSync(moggHeaderPath).size;
 
 var audicaFiles = {
-  'song.mid': fs.readFileSync('datafiles/midifile')
+  'song.mid': fs.readFileSync(__dirname + '/datafiles/midifile')
 }
 
 const zip = new StreamZip({
@@ -99,11 +99,11 @@ zip.on('ready', () => {
         audicaFiles[cueFile] = JSON.stringify(cues[difficultyMap[cueFile][difficultyIndex]],0,2);
     });
 
-    fs.readdirSync('audicatemplate').forEach(function(f) {
-      audicaFiles[f] = fs.readFileSync('audicatemplate/' + f);
+    fs.readdirSync(__dirname + '/audicatemplate').forEach(function(f) {
+      audicaFiles[f] = fs.readFileSync(__dirname + '/audicatemplate/' + f);
     });
 
-    zipName = __dirname + '/' + songDesc.songID  + '.audica'
+    zipName = songDesc.songID  + '.audica'
 
     var ozip = new JSZip();
     Object.keys(audicaFiles).forEach(function(fileName) {
