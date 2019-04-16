@@ -29,10 +29,10 @@ var songDesc = {
 };
 
 var difficultyMap = {
-  'beginner.cues': ['Easy','Normal'],
-  'moderate.cues': ['Normal','Hard'],
-  'advanced.cues': ['Hard','Expert'],
-  'expert.cues':   ['Expert','ExpertPlus']
+  'beginner.cues': ['easy','normal'],
+  'moderate.cues': ['normal','hard'],
+  'advanced.cues': ['hard','expert'],
+  'expert.cues':   ['expert','expertplus']
 }
 var difficultyIndex = 0;
 
@@ -46,8 +46,14 @@ zip.on('ready', () => {
 
     var songInfo = JSON.parse(zip.entryDataSync(filePath['info.json']));
     var infoPath = filePath['info.json'].replace(/[^/]*$/,'');    
-    
-    var oggPath = songInfo.difficultyLevels[0].audioPath;
+
+    filePath = {}
+    var re = new RegExp("^"+infoPath);
+    Object.keys(zip.entries()).forEach(function(entry) {
+      filePath[entry.replace(re,'').toLowerCase()] = entry;
+    });
+
+    var oggPath = songInfo.difficultyLevels[0].audioPath.toLowerCase();
     var offset  = songInfo.difficultyLevels[0].offset || 0;
 
     songDesc.songID = songInfo.songName.toLowerCase() + songInfo.songSubName.toLowerCase() + songInfo.authorName.toLowerCase();
@@ -62,36 +68,40 @@ zip.on('ready', () => {
     audicaFiles['song.desc'] = JSON.stringify(songDesc,0,2);
 
     audicaFiles['song.mid'].writeUIntBE(Math.round(60000000/songDesc.tempo),41,3);
-    audicaFiles['song.mogg'] = Buffer.concat([fs.readFileSync(moggHeaderPath),zip.entryDataSync(infoPath + oggPath)]);
+    audicaFiles['song.mogg'] = Buffer.concat([fs.readFileSync(moggHeaderPath),zip.entryDataSync(filePath[oggPath])]);
 
     songInfo.difficultyLevels.forEach(function(l) {
-      if (l.difficulty === 'ExpertPlus')
+      if (l.difficulty.toLowerCase() === 'expertplus')
         difficultyIndex = 1;
-      cues[l.difficulty] = {cues: []};
+      cues[l.difficulty.toLowerCase()] = {cues: []};
 
       var dedupe = {};
-      
-      JSON.parse(zip.entryDataSync(infoPath + l.jsonPath))._notes.forEach(function(n) {
-        if (n._type <= 1) {
-          var tick     = Math.round(n._time * 480);
-          var handType = Math.abs(n._type-1) + 1;
-          if(!dedupe[tick + '_' + handType]) {
-            cues[l.difficulty].cues.push({
-              tick: tick,
-              tickLength: 120,
-              pitch: 28 + 12 * n._lineLayer + n._lineIndex,
-              velocity: 60,
-              gridOffset: {
-                x: 0.0,
-                y: 0.0
-              },
-              handType: handType,
-              behavior: 0
-            });
-            dedupe[tick + '_' + handType] = true;
+     
+      if(l.jsonPath.toLowerCase() in filePath) {
+        JSON.parse(zip.entryDataSync(filePath[l.jsonPath.toLowerCase()]))._notes.forEach(function(n) {
+          if (n._type <= 1) {
+            var tick     = Math.round(n._time * 480);
+            var handType = Math.abs(n._type-1) + 1;
+            if(!dedupe[tick + '_' + handType]) {
+              cues[l.difficulty.toLowerCase()].cues.push({
+                tick: tick,
+                tickLength: 120,
+                pitch: 28 + 12 * n._lineLayer + n._lineIndex,
+                velocity: 60,
+                gridOffset: {
+                  x: 0.0,
+                  y: 0.0
+                },
+                handType: handType,
+                behavior: 0
+              });
+              dedupe[tick + '_' + handType] = true;
+            }
           }
-        }
-      });
+        });
+      } else {
+        console.log(l.difficulty + " difficulty is defined but json for difficulty is missing, skipping");
+      }
     });
 
     Object.keys(difficultyMap).forEach(function(cueFile) {
