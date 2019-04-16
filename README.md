@@ -3,7 +3,7 @@ Dirty README (will update)
 How To Use:
 
 Easiest Way for Windows: 
-Head over to Releases and download latest! Drag your beat saber song zip onto the !BS2AUD_DRAG_N_DROP.BAT and enjoy your .audica file
+Head over to Releases and download latest! Drag your beat saber song zip onto the !BS2AUD_DRAG_N_DROP.BAT and enjoy your .audica file. Release has nodejs bundled. No need to install nodejs.
 
 Easy way for all OSes
 
