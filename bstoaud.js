@@ -48,7 +48,7 @@ zip.on('ready', () => {
     var infoPath = filePath['info.json'].replace(/[^/]*$/,'');    
 
     filePath = {}
-    var re = new RegExp("^"+infoPath);
+    var re = new RegExp("^"+infoPath.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'));
     Object.keys(zip.entries()).forEach(function(entry) {
       filePath[entry.replace(re,'').toLowerCase()] = entry;
     });
