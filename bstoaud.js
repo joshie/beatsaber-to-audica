@@ -65,6 +65,12 @@ zip.on('ready', () => {
     songDesc.tempo = songInfo.beatsPerMinute;
     songDesc.offset = offset; 
 
+    if (typeof songInfo.previewStartTime === 'number') {
+      songDesc.previewStartSeconds = songInfo.previewStartTime;
+    } else {
+      songDesc.previewStartSeconds = 12;
+    }
+
     audicaFiles['song.desc'] = JSON.stringify(songDesc,0,2);
 
     audicaFiles['song.mid'].writeUIntBE(Math.round(60000000/songDesc.tempo),41,3);
