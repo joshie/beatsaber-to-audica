@@ -1,6 +1,7 @@
 const fs = require('fs');
 const StreamZip = require('node-stream-zip');
 const JSZip = require("jszip");
+const recursive = require("recursive-readdir");
 
 const moggHeaderPath = __dirname + '/datafiles/moggheader';
 const moggHeaderSize = fs.statSync(moggHeaderPath).size;
@@ -9,131 +10,153 @@ var audicaFiles = {
   'song.mid': fs.readFileSync(__dirname + '/datafiles/midifile')
 }
 
-const zip = new StreamZip({
-    file: process.argv[2],
-    storeEntries: true
-});
+// Directory, Zip, or Bail
+var isDirectory = false
+if (typeof process.argv[2] === 'undefined') {
+  console.log('This tool requires a Beat Saber song zip or directory to run');
+  process.exit(0);
+} else if (!(process.argv[2].toLowerCase().endsWith('.zip'))) {
+  if (fs.statSync(process.argv[2]).isDirectory()) {
+    isDirectory = true
+  } else {
+    console.log('Argument must be a zipfile or directory');
+    process.exit(0);
+  }
+}
 
 var songDesc = {
-    "moggSong": "song.moggsong",
-    "midiFile": "song.mid",
-    "fusionSpatialized": "fusion/guns/default/drums_default_spatial.fusion",
-    "fusionUnspatialized": "fusion/guns/default/drums_default_sub.fusion",
-    "sustainSongRight": "song_sustain_r.moggsong",
-    "sustainSongLeft": "song_sustain_l.moggsong",
-    "fxSong": "song_extras.moggsong",
-    "songEndEvent": "event:/song_end/song_end_A",
-    "prerollSeconds": 3.0,
-    "useMidiForCues": false,
-    "hidden": false
+  "moggSong":            "song.moggsong",
+  "midiFile":            "song.mid",
+  "fusionSpatialized":   "fusion/guns/default/drums_default_spatial.fusion",
+  "fusionUnspatialized": "fusion/guns/default/drums_default_sub.fusion",
+  "sustainSongRight":    "song_sustain_r.moggsong",
+  "sustainSongLeft":     "song_sustain_l.moggsong",
+  "fxSong":              "song_extras.moggsong",
+  "songEndEvent":        "event:/song_end/song_end_A",
+  "prerollSeconds":      3.0,
+  "useMidiForCues":      false,
+  "hidden":              false
 };
 
-var difficultyMap = {
+const difficultyMap = {
   'beginner.cues': ['easy','normal'],
   'moderate.cues': ['normal','hard'],
   'advanced.cues': ['hard','expert'],
   'expert.cues':   ['expert','expertplus']
 }
-var difficultyIndex = 0;
 
-var filePath = {};
-var cues = {};
+if (isDirectory) {
+  recursive(process.argv[2], function (err, files) {
+    fs.reader = fs.readFileSync;
+    createAudica(fs,files);
+  }); 
+} else {
+  const zip = new StreamZip({
+    file: process.argv[2],
+    storeEntries: true
+  });
 
-zip.on('ready', () => {
-    Object.keys(zip.entries()).forEach(function(entry) {
-      filePath[entry.replace(/.*\//,'').toLowerCase()] = entry;
-    });
+  zip.on('ready', () => {
+    zip.reader = zip.entryDataSync;
+    createAudica(zip,Object.keys(zip.entries()));
+  });
+}
 
-    var songInfo = JSON.parse(zip.entryDataSync(filePath['info.json']));
-    var infoPath = filePath['info.json'].replace(/[^/]*$/,'');    
+function createAudica(o,files) {
+  var filePath = {};
 
-    filePath = {}
-    var re = new RegExp("^"+infoPath.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'));
-    Object.keys(zip.entries()).forEach(function(entry) {
-      filePath[entry.replace(re,'').toLowerCase()] = entry;
-    });
+  files.forEach(function(entry) {
+    filePath[entry.replace(/.*\//,'').toLowerCase()] = entry;
+  });
 
-    var oggPath = songInfo.difficultyLevels[0].audioPath.toLowerCase();
-    var offset  = songInfo.difficultyLevels[0].offset || 0;
+  var infoPath = filePath['info.json'].replace(/[^/]*$/,'');
+  var re = new RegExp("^"+infoPath.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'));
 
-    songDesc.songID = songInfo.songName.toLowerCase() + songInfo.songSubName.toLowerCase() + songInfo.authorName.toLowerCase();
-    songDesc.songID = songDesc.songID.replace(/[^a-z0-9]/gi,'');
-    songDesc.title  = songInfo.songName;
-    songDesc.artist = songInfo.songSubName + '';
-    if (songDesc.artist == '')
-      songDesc.artist = songInfo.authorName;
-    songDesc.tempo = songInfo.beatsPerMinute;
-    songDesc.offset = offset; 
+  files.forEach(function(entry) {
+    filePath[entry.replace(re,'').toLowerCase()] = entry;
+  });
 
-    if (typeof songInfo.previewStartTime === 'number') {
-      songDesc.previewStartSeconds = songInfo.previewStartTime;
-    } else {
-      songDesc.previewStartSeconds = 12;
-    }
+  var songInfo = JSON.parse(o.reader(filePath['info.json']));
+  var oggPath = songInfo.difficultyLevels[0].audioPath.toLowerCase();
+  var offset  = songInfo.difficultyLevels[0].offset || 0;
 
-    audicaFiles['song.desc'] = JSON.stringify(songDesc,0,2);
+  songDesc.songID = songInfo.songName.toLowerCase() + songInfo.songSubName.toLowerCase() + songInfo.authorName.toLowerCase();
+  songDesc.songID = songDesc.songID.replace(/[^a-z0-9]/gi,'');
+  songDesc.title  = songInfo.songName;
+  songDesc.artist = songInfo.songSubName + '';
+  if (songDesc.artist == '')
+    songDesc.artist = songInfo.authorName;
+  songDesc.tempo = songInfo.beatsPerMinute;
+  songDesc.offset = offset; 
 
-    audicaFiles['song.mid'].writeUIntBE(Math.round(60000000/songDesc.tempo),41,3);
-    audicaFiles['song.mogg'] = Buffer.concat([fs.readFileSync(moggHeaderPath),zip.entryDataSync(filePath[oggPath])]);
+  if (typeof songInfo.previewStartTime === 'number') {
+    songDesc.previewStartSeconds = songInfo.previewStartTime;
+  } else {
+    songDesc.previewStartSeconds = 12;
+  }
 
-    songInfo.difficultyLevels.forEach(function(l) {
-      if (l.difficulty.toLowerCase() === 'expertplus')
-        difficultyIndex = 1;
-      cues[l.difficulty.toLowerCase()] = {cues: []};
+  audicaFiles['song.desc'] = JSON.stringify(songDesc,0,2);
 
-      var dedupe = {};
+  audicaFiles['song.mid'].writeUIntBE(Math.round(60000000/songDesc.tempo),41,3);
+  audicaFiles['song.mogg'] = Buffer.concat([fs.readFileSync(moggHeaderPath),o.reader(filePath[oggPath])]);
+
+  var cues = {};
+  var difficultyIndex = 0;
+
+  songInfo.difficultyLevels.forEach(function(l) {
+    if (l.difficulty.toLowerCase() === 'expertplus')
+      difficultyIndex = 1;
+    cues[l.difficulty.toLowerCase()] = {cues: []};
+
+    var dedupe = {};
      
-      if(l.jsonPath.toLowerCase() in filePath) {
-        JSON.parse(zip.entryDataSync(filePath[l.jsonPath.toLowerCase()]))._notes.forEach(function(n) {
-          if (n._type <= 1) {
-            var tick     = Math.round(n._time * 480);
-            var handType = Math.abs(n._type-1) + 1;
-            if(!dedupe[tick + '_' + handType]) {
-              cues[l.difficulty.toLowerCase()].cues.push({
-                tick: tick,
-                tickLength: 120,
-                pitch: 28 + 12 * n._lineLayer + n._lineIndex,
-                velocity: 60,
-                gridOffset: {
-                  x: 0.0,
-                  y: 0.0
-                },
-                handType: handType,
-                behavior: 0
-              });
-              dedupe[tick + '_' + handType] = true;
-            }
+    if(l.jsonPath.toLowerCase() in filePath) {
+      JSON.parse(o.reader(filePath[l.jsonPath.toLowerCase()]))._notes.forEach(function(n) {
+        if (n._type <= 1) {
+          var tick     = Math.round(n._time * 480);
+          var handType = Math.abs(n._type-1) + 1;
+          if(!dedupe[tick + '_' + handType]) {
+            cues[l.difficulty.toLowerCase()].cues.push({
+              tick: tick,
+              tickLength: 120,
+              pitch: 28 + 12 * n._lineLayer + n._lineIndex,
+              velocity: 60,
+              gridOffset: {
+                x: 0.0,
+                y: 0.0
+              },
+              handType: handType,
+              behavior: 0
+            });
+            dedupe[tick + '_' + handType] = true;
           }
-        });
-      } else {
-        console.log(l.difficulty + " difficulty is defined but json for difficulty is missing, skipping");
-      }
-    });
+        }
+      });
+    } else {
+      console.log(l.difficulty + " difficulty is defined but json for difficulty is missing, skipping");
+    }
+  });
 
-    Object.keys(difficultyMap).forEach(function(cueFile) {
-      if(typeof cues[difficultyMap[cueFile][difficultyIndex]] === 'object')
-        audicaFiles[cueFile] = JSON.stringify(cues[difficultyMap[cueFile][difficultyIndex]],0,2);
-    });
+  Object.keys(difficultyMap).forEach(function(cueFile) {
+    if(typeof cues[difficultyMap[cueFile][difficultyIndex]] === 'object')
+      audicaFiles[cueFile] = JSON.stringify(cues[difficultyMap[cueFile][difficultyIndex]],0,2);
+  });
 
-    fs.readdirSync(__dirname + '/audicatemplate').forEach(function(f) {
-      audicaFiles[f] = fs.readFileSync(__dirname + '/audicatemplate/' + f);
-    });
+  fs.readdirSync(__dirname + '/audicatemplate').forEach(function(f) {
+    audicaFiles[f] = fs.readFileSync(__dirname + '/audicatemplate/' + f);
+  });
 
-    zipName = songDesc.songID  + '.audica'
+  zipName = songDesc.songID  + '.audica'
 
-    var ozip = new JSZip();
-    Object.keys(audicaFiles).forEach(function(fileName) {
-      ozip.file(fileName,audicaFiles[fileName]);
-    });
+  var ozip = new JSZip();
+  Object.keys(audicaFiles).forEach(function(fileName) {
+    ozip.file(fileName,audicaFiles[fileName]);
+  });
 
-    ozip
-    .generateNodeStream({type:'nodebuffer',streamFiles:false})
-    .pipe(fs.createWriteStream(zipName))
-    .on('finish', function () {
-      // JSZip generates a readable stream with a "end" event,
-      // but is piped here in a writable stream which emits a "finish" event.
-      console.log(zipName + " written.");
-    });
- 
-    zip.close()
-});
+  ozip
+  .generateNodeStream({type:'nodebuffer',streamFiles:false})
+  .pipe(fs.createWriteStream(zipName))
+  .on('finish', function () {
+    console.log(zipName + " written.");
+  });
+}
