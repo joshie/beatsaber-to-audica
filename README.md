@@ -3,7 +3,7 @@ Dirty README (will update)
 How To Use:
 
 Easiest Way for Windows: 
-Head over to Releases and download latest! Drag your beat saber song zip onto the !BS2AUD_DRAG_N_DROP.BAT and enjoy your .audica file. Release has nodejs bundled. No need to install nodejs.
+Head over to Releases and download latest! Drag your beat saber song zip or directory onto the !BS2AUD_DRAG_N_DROP.BAT and enjoy your .audica file. Release has nodejs bundled. No need to install nodejs.
 
 Easy way for all OSes
 
@@ -15,7 +15,7 @@ from the downloaded/cloned directory on the command line:
 
 ```
 npm install
-node bstoaud.js path/to/your/beatsabersong.zip
+node bstoaud.js path/to/your/beatsabersong{,.zip}
 ```
 
 enjoy your .audica file
