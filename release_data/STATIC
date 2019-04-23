@@ -1,22 +1,6 @@
-How To Use:
-
-Easiest Way for Windows: 
-Download latest release! Drag your beat saber song zip or directory onto the !BS2AUD_DRAG_N_DROP.BAT and enjoy your .audica file. Release has nodejs bundled. No need to install nodejs.
-
-Easy way for all OSes
-
-install node.js from https://nodejs.org
-
-clone this repository, or download it (clone or download > download zip)
-
-from the downloaded/cloned directory on the command line:
-
-```
-npm install
-node bstoaud.js path/to/your/beatsabersong{,.zip}
-```
-
-enjoy your .audica file
+Zip is for windows, source runs on all OSes
+Zip has nodejs bundled. no need to install nodejs
+Just drag your beat saber song zip or directory onto !BS2AUD_DRAG_N_DROP.BAT and enjoy your .audica
 
 NOTES
 
@@ -25,4 +9,3 @@ this utility sets prerollSeconds in song.desc to 3.0. This is to avoid notes in 
 If ExpertPlus is present, Audica Beginner maps to Beat Saber Normal, Moderate to Hard, Advanced to Expert, and Expert to ExpertPlus
 
 If ExpertPlus is not present, Audica Beginner maps to Beat Saber Easy, Moderate to Normal, Advanced to Hard, and Expert to Expert
-
