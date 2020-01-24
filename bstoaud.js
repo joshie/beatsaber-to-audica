@@ -64,35 +64,35 @@ if (isDirectory) {
 
 function createAudica(o,files) {
   var filePath = {};
-
   files.forEach(function(entry) {
-    filePath[entry.replace(/.*\//,'').toLowerCase()] = entry;
+    filePath[entry.replace(/.*(\/|\\)/,'').toLowerCase()] = entry;
   });
 
-  var infoPath = filePath['info.json'].replace(/[^/]*$/,'');
+  var infoPath = filePath['info.dat'].replace(/[^/]*$/,'');
   var re = new RegExp("^"+infoPath.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'));
 
   files.forEach(function(entry) {
     filePath[entry.replace(re,'').toLowerCase()] = entry;
   });
 
-  var songInfo = JSON.parse(o.reader(filePath['info.json']));
-  var oggPath = songInfo.difficultyLevels[0].audioPath.toLowerCase();
-  var offset  = songInfo.difficultyLevels[0].offset || 0;
+  var songInfo = JSON.parse(o.reader(filePath['info.dat']));
+  //var songInfo = infoFile._difficultyBeatmapSets[0];
+  var oggPath = songInfo._songFilename.toLowerCase();
+  var offset  = songInfo._songTimeOffset || 0;
 
-  songDesc.songID = songInfo.songName.toLowerCase() + songInfo.songSubName.toLowerCase() + songInfo.authorName.toLowerCase();
+  songDesc.songID = songInfo._songName.toLowerCase() + songInfo._songSubName.toLowerCase() + songInfo._songAuthorName.toLowerCase();
   songDesc.songID = songDesc.songID.replace(/[^a-z0-9]/gi,'');
-  songDesc.title  = songInfo.songName;
-  songDesc.artist = songInfo.songSubName + '';
+  songDesc.title  = songInfo._songName;
+  songDesc.artist = songInfo._songSubName + '';
   if (songDesc.artist == '')
-    songDesc.artist = songInfo.authorName;
-  songDesc.tempo = songInfo.beatsPerMinute;
+    songDesc.artist = songInfo._levelAuthorName;
+  songDesc.tempo = songInfo._beatsPerMinute;
   songDesc.offset = offset; 
 
-  if (typeof songInfo.previewStartTime === 'number') {
-    songDesc.previewStartSeconds = songInfo.previewStartTime;
+  if (typeof songInfo._previewStartTime === 'number') {
+    songDesc.previewStartSeconds = songInfo._previewStartTime;
   } else {
-    songDesc.previewStartSeconds = 12;
+    songDesc._previewStartSeconds = 12;
   }
 
   audicaFiles['song.desc'] = JSON.stringify(songDesc,0,2);
@@ -103,20 +103,20 @@ function createAudica(o,files) {
   var cues = {};
   var difficultyIndex = 0;
 
-  songInfo.difficultyLevels.forEach(function(l) {
-    if (l.difficulty.toLowerCase() === 'expertplus')
+  songInfo._difficultyBeatmapSets[0]._difficultyBeatmaps.forEach(function(l) {
+    if (l._difficulty.toLowerCase() === 'expertplus')
       difficultyIndex = 1;
-    cues[l.difficulty.toLowerCase()] = {cues: []};
+    cues[l._difficulty.toLowerCase()] = {cues: []};
 
     var dedupe = {};
      
-    if(l.jsonPath.toLowerCase() in filePath) {
-      JSON.parse(o.reader(filePath[l.jsonPath.toLowerCase()]))._notes.forEach(function(n) {
+    if(l._beatmapFilename.toLowerCase() in filePath) {
+      JSON.parse(o.reader(filePath[l._beatmapFilename.toLowerCase()]))._notes.forEach(function(n) {
         if (n._type <= 1) {
           var tick     = Math.round(n._time * 480);
           var handType = Math.abs(n._type-1) + 1;
           if(!dedupe[tick + '_' + handType]) {
-            cues[l.difficulty.toLowerCase()].cues.push({
+            cues[l._difficulty.toLowerCase()].cues.push({
               tick: tick,
               tickLength: 120,
               pitch: 28 + 12 * n._lineLayer + n._lineIndex,
@@ -133,7 +133,7 @@ function createAudica(o,files) {
         }
       });
     } else {
-      console.log(l.difficulty + " difficulty is defined but json for difficulty is missing, skipping");
+      console.log(l._difficulty + " difficulty is defined but json for difficulty is missing, skipping");
     }
   });
 
