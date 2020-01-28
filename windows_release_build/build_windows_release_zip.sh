@@ -1,6 +1,6 @@
 #!/bin/bash
 VERSION=$(cat ../package.json | grep version | cut -d'"' -f4)
-TEXT="$VERSION "$'Changelog:\n'"$(cat ../release_data/0.1.4)"$'\n\n'"$(cat ../release_data/STATIC)"
+TEXT="$VERSION "$'Changelog:\n'"$(cat ../release_data/$VERSION)"$'\n\n'"$(cat ../release_data/STATIC)"
 #TEXT="$(echo "$TEXT" | tr "\n" '^' | sed 's|\^|\\n|g')"
 TITLE="Beat Saber to Audica Converter $VERSION"
 TOKEN=$(git config --global github.token)
