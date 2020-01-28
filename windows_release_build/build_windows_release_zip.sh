@@ -14,7 +14,7 @@ for i in $(ls ../../../ | grep -v windows_release_build | grep -v node_modules);
 done
 npm install
 cd ..
-wget https://nodejs.org/dist/v10.15.3/node-v10.15.3-win-x64.zip
+curl https://nodejs.org/dist/v10.15.3/node-v10.15.3-win-x64.zip -L -o node-v10.15.3-win-x64.zip
 unzip node-v10.15.3-win-x64.zip
 rm node-v10.15.3-win-x64.zip
 mv node-v10.15.3-win-x64 node
