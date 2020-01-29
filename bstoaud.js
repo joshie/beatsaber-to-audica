@@ -116,6 +116,18 @@ function createAudica(o,files) {
           var tick     = Math.round(n._time * 480);
           var handType = Math.abs(n._type-1) + 1;
           if(!dedupe[tick + '_' + handType]) {
+            if (n._lineLayer >= 1000) {
+              n._lineLayer = Math.round((n._lineLayer - 1000) / 1000);
+            }
+            if (n._lineLayer <= -1000) {
+              n._lineLayer = Math.round((n._lineLayer + 1000) / 1000);
+            }
+            if (n._lineIndex >= 1000) {
+              n._lineIndex = Math.round((n._lineIndex - 1000) / 1000);
+            }
+            if (n._lineIndex <= -1000) {
+              n._lineIndex = Math.round((n._lineIndex + 1000) / 1000);
+            }
             cues[l._difficulty.toLowerCase()].cues.push({
               tick: tick,
               tickLength: 120,

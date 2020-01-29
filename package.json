@@ -1,6 +1,6 @@
 {
   "name": "beatsaber-to-audica",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Utility to Convert Beat Saber Custom Tracks to Audica",
   "main": "bstoaud.js",
   "scripts": {
